@@ -1,70 +1,52 @@
 "use client";
 
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "@/redux/store";
-import { loginSuccess } from "@/redux/slices/authSlice";
+import { fetchProducts } from "@/redux/slices/productSlice";
+import ProductCard from "@/components/ProductCard";
 
-/**
- * Temporary Home page to test real login
- */
-export default function Home() {
-  // ✅ Typed dispatch
+export default function HomePage() {
   const dispatch = useDispatch<AppDispatch>();
+  const { items, loading, error } = useSelector(
+    (state: RootState) => state.products
+  );
 
-  // ✅ Typed selector
-  const auth = useSelector((state: RootState) => state.auth);
+  useEffect(() => {
+    dispatch(fetchProducts());
+  }, [dispatch]);
 
-  /**
-   * Calls backend login API
-   * On success, updates Redux state
-   */
-  const handleLogin = async () => {
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: "test@example.com",
-          password: "password123",
-        }),
-      });
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        Loading products...
+      </div>
+    );
+  }
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.message || "Login failed");
-        return;
-      }
-
-      // ✅ Update Redux with backend response
-      dispatch(
-        loginSuccess({
-          user: data.user,
-          token: data.token,
-        })
-      );
-    } catch (error) {
-      console.error("Login error:", error);
-    }
-  };
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black text-red-500 flex items-center justify-center">
+        {error}
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
-      <h1 className="text-2xl font-bold mb-4">DairyKart AI 🚀</h1>
+    <div className="min-h-screen bg-black p-6">
+      <h1 className="text-3xl text-white font-bold mb-6">
+        🛒 DairyKart Products
+      </h1>
 
-      <button
-        onClick={handleLogin}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-      >
-        Login with Backend API
-      </button>
-
-      {/* ✅ FIXED UI COLORS */}
-      <pre className="mt-4 bg-gray-900 text-green-400 p-4 rounded text-sm overflow-auto">
-        {JSON.stringify(auth, null, 2)}
-      </pre>
+      {items.length === 0 ? (
+        <p className="text-gray-400">No products found</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {items.map((product) => (
+            <ProductCard key={product._id} product={product} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

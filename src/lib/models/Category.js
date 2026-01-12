@@ -5,15 +5,18 @@ const CategorySchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      unique: true, // No duplicate categories like "Milk"
+      unique: true,
       trim: true,
     },
+
     description: {
       type: String,
     },
   },
-  { timestamps: true } // adds createdAt & updatedAt automatically
+  { timestamps: true }
 );
 
-export default mongoose.models.Category ||
-  mongoose.model("Category", CategorySchema);
+const Category =
+  mongoose.models.Category || mongoose.model("Category", CategorySchema);
+
+export default Category;

@@ -1,28 +1,23 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
+import dbConnect from "@/lib/mongodb";
 import Product from "@/lib/models/Product";
 
-export async function GET(req, { params }) {
+export async function GET() {
   try {
-    await connectDB();
+    await dbConnect();
 
-    const product = await Product.findOne({
-      _id: params.id,
-      isActive: true,
-    }).populate("category", "name");
+    const products = await Product.find({ isActive: true })
+      .populate("category", "name")
+      .lean();
 
-    if (!product) {
-      return NextResponse.json(
-        { message: "Product not found" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(product);
-  } catch {
+    return NextResponse.json({
+      products,
+    });
+  } catch (error) {
+    console.error("GET PRODUCTS ERROR:", error);
     return NextResponse.json(
-      { error: "Invalid product ID" },
-      { status: 400 }
+      { message: "Failed to fetch products" },
+      { status: 500 }
     );
   }
 }

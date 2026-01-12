@@ -2,7 +2,6 @@ import { createSlice } from "@reduxjs/toolkit";
 
 /**
  * User interface
- * Represents logged-in user data coming from backend
  */
 interface User {
   id: string;
@@ -21,25 +20,28 @@ interface AuthState {
 }
 
 /**
- * Initial state
- * 🔑 Loads data from localStorage so login persists after refresh
+ * Load auth state from localStorage
  */
-const initialState: AuthState = {
-  user:
-    typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("user") || "null")
-      : null,
+const loadAuthState = (): AuthState => {
+  if (typeof window === "undefined") {
+    return {
+      user: null,
+      token: null,
+      isAuthenticated: false,
+    };
+  }
 
-  token:
-    typeof window !== "undefined"
-      ? localStorage.getItem("token")
-      : null,
+  const user = localStorage.getItem("user");
+  const token = localStorage.getItem("token");
 
-  isAuthenticated:
-    typeof window !== "undefined"
-      ? !!localStorage.getItem("token")
-      : false,
+  return {
+    user: user ? JSON.parse(user) : null,
+    token: token,
+    isAuthenticated: !!token,
+  };
 };
+
+const initialState: AuthState = loadAuthState();
 
 /**
  * Auth Slice
@@ -47,25 +49,21 @@ const initialState: AuthState = {
 const authSlice = createSlice({
   name: "auth",
   initialState,
-
   reducers: {
     /**
-     * Called after successful login
-     * Saves user & token in Redux + localStorage
+     * Login success
      */
     loginSuccess(state, action) {
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.isAuthenticated = true;
 
-      // Persist data
       localStorage.setItem("user", JSON.stringify(action.payload.user));
       localStorage.setItem("token", action.payload.token);
     },
 
     /**
-     * Logout user
-     * Clears Redux state & localStorage
+     * Logout (manual or auto)
      */
     logout(state) {
       state.user = null;
@@ -78,12 +76,5 @@ const authSlice = createSlice({
   },
 });
 
-/**
- * Export actions
- */
 export const { loginSuccess, logout } = authSlice.actions;
-
-/**
- * Export reducer
- */
 export default authSlice.reducer;

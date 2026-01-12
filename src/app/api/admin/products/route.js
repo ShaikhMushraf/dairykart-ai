@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-import { connectDB } from "@/lib/mongodb";
+import dbConnect from "@/lib/mongodb";
 import Product from "@/lib/models/Product";
 
 export async function POST(req) {
   try {
-    await connectDB();
+    await dbConnect();
 
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {

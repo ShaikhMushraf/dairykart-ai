@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { connectDB } from "@/lib/mongodb";
+import dbConnect from "@/lib/mongodb";
 import User from "@/lib/models/User";
 
 export async function POST(req) {
   try {
-    await connectDB();
+    await dbConnect();
 
     const { email, password } = await req.json();
 
@@ -43,7 +43,7 @@ export async function POST(req) {
       { expiresIn: "7d" }
     );
 
-    // 5️⃣ Send response
+    // 5️⃣ Response
     return NextResponse.json({
       message: "Login successful",
       token,
@@ -55,8 +55,9 @@ export async function POST(req) {
       },
     });
   } catch (error) {
+    console.error("LOGIN ERROR:", error);
     return NextResponse.json(
-      { error: error.message },
+      { message: "Internal server error" },
       { status: 500 }
     );
   }

@@ -5,11 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import type { RootState } from "@/redux/store";
 
-/**
- * AdminGuard
- * Protects admin routes
- * Redirects non-admin users
- */
 export default function AdminGuard({
   children,
 }: {
@@ -22,22 +17,10 @@ export default function AdminGuard({
   );
 
   useEffect(() => {
-    // Not logged in → redirect
-    if (!isAuthenticated) {
-      router.push("/");
-      return;
-    }
-
-    // Logged in but not admin → redirect
-    if (user?.role !== "admin") {
-      router.push("/");
+    if (!isAuthenticated || user?.role !== "admin") {
+      router.push("/login");
     }
   }, [isAuthenticated, user, router]);
-
-  // While checking auth → render nothing (prevents flicker)
-  if (!isAuthenticated || user?.role !== "admin") {
-    return null;
-  }
 
   return <>{children}</>;
 }

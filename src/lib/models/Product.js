@@ -23,22 +23,25 @@ const ProductSchema = new mongoose.Schema(
     },
 
     image: {
-      type: String, // image URL (later Cloudinary / S3)
+      type: String,
     },
 
     category: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Category", // relation
+      ref: "Category",
       required: true,
     },
 
     isActive: {
       type: Boolean,
-      default: true, // soft delete support
+      default: true,
     },
   },
   { timestamps: true }
 );
 
-export default mongoose.models.Product ||
-  mongoose.model("Product", ProductSchema);
+// ⭐ VERY IMPORTANT: assign model to variable first
+const Product =
+  mongoose.models.Product || mongoose.model("Product", ProductSchema);
+
+export default Product;

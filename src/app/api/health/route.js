@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
+import dbConnect from "@/lib/mongodb";
 
 export async function GET() {
   try {
-    await connectDB();
+    await dbConnect();
     return NextResponse.json({
       success: true,
       message: "Database connected successfully 🚀",
