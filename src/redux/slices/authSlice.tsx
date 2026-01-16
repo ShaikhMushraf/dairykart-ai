@@ -1,8 +1,5 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-/**
- * User interface
- */
 interface User {
   id: string;
   name: string;
@@ -10,50 +7,37 @@ interface User {
   role: string;
 }
 
-/**
- * Auth state interface
- */
 interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
 }
 
-/**
- * Load auth state from localStorage
- */
-const loadAuthState = (): AuthState => {
-  if (typeof window === "undefined") {
-    return {
-      user: null,
-      token: null,
-      isAuthenticated: false,
-    };
-  }
+const initialState: AuthState = {
+  user:
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("user") || "null")
+      : null,
 
-  const user = localStorage.getItem("user");
-  const token = localStorage.getItem("token");
+  token:
+    typeof window !== "undefined"
+      ? localStorage.getItem("token")
+      : null,
 
-  return {
-    user: user ? JSON.parse(user) : null,
-    token: token,
-    isAuthenticated: !!token,
-  };
+  isAuthenticated:
+    typeof window !== "undefined"
+      ? !!localStorage.getItem("token")
+      : false,
 };
 
-const initialState: AuthState = loadAuthState();
-
-/**
- * Auth Slice
- */
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    /**
-     * Login success
-     */
-    loginSuccess(state, action) {
+    loginSuccess: (
+      state,
+      action: PayloadAction<{ user: User; token: string }>
+    ) => {
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.isAuthenticated = true;
@@ -62,10 +46,7 @@ const authSlice = createSlice({
       localStorage.setItem("token", action.payload.token);
     },
 
-    /**
-     * Logout (manual or auto)
-     */
-    logout(state) {
+    logout: (state) => {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;

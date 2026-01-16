@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ReduxProvider from "@/redux/ReduxProvider";
+import ClientLayout from "@/components/ClientLayout";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,17 +14,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-/**
- * Metadata remains server-side (best practice)
- */
 export const metadata: Metadata = {
   title: "DairyKart AI",
   description: "AI powered dairy e-commerce platform",
 };
 
 /**
- * Root Layout
- * Wraps entire app with ReduxProvider
+ * RootLayout (SERVER COMPONENT)
+ * - NO Redux hooks here
  */
 export default function RootLayout({
   children,
@@ -33,10 +31,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black`}
       >
         <ReduxProvider>
-          {children}
+          <ClientLayout>
+            {children}
+          </ClientLayout>
         </ReduxProvider>
       </body>
     </html>

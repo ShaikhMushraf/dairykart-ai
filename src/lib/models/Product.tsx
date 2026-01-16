@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import "./Category"; // 👈 ADD THIS LINE
 
 const ProductSchema = new mongoose.Schema(
   {

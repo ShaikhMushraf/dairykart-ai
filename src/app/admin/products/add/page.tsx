@@ -1,83 +1,135 @@
 "use client";
 
 import { useState } from "react";
-import { useDispatch } from "react-redux";
-import { useRouter } from "next/navigation";
-import type { AppDispatch } from "@/redux/store";
-import { addProduct } from "@/redux/slices/productSlice";
-import AdminGuard from "@/components/AdminGuard";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
-/**
- * Admin Add Product Page
- * - Admin only
- * - Submits product to backend
- * - Updates Redux
- */
 export default function AddProductPage() {
-  const dispatch = useDispatch<AppDispatch>();
-  const router = useRouter();
+  const { token } = useSelector((state: RootState) => state.auth);
 
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState<number>(0);
-  const [description, setDescription] = useState("");
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    price: "",
+    stock: "",
+    category: "",
+    image: "/products/Cream Milk.jpeg", // local image
+  });
 
-  /**
-   * Submit handler
-   */
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setMessage("");
 
-    await dispatch(
-      addProduct({
-        name,
-        price,
-        description,
-      })
-    );
+    try {
+      const res = await fetch("/api/admin/products", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...form,
+          price: Number(form.price),
+          stock: Number(form.stock),
+        }),
+      });
 
-    // Redirect back to product list
-    router.push("/admin/products");
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to add product");
+      }
+
+      setMessage("✅ Product added successfully");
+      setForm({
+        name: "",
+        description: "",
+        price: "",
+        stock: "",
+        category: "",
+        image: "/products/Cream Milk.jpeg",
+      });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setMessage(`❌ ${err.message}`);
+      } else {
+        setMessage("❌ An unexpected error occurred");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <AdminGuard>
-      <div className="min-h-screen bg-black text-white p-6">
-        <h1 className="text-2xl font-bold mb-6">➕ Add Product</h1>
+    <div className="max-w-xl mx-auto p-6 text-white">
+      <h1 className="text-2xl font-bold mb-6">Add Product</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-          <input
-            type="text"
-            placeholder="Product name"
-            className="w-full p-2 bg-gray-800 rounded"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <input
+          name="name"
+          placeholder="Product name"
+          value={form.name}
+          onChange={handleChange}
+          className="w-full p-2 text-black rounded"
+          required
+        />
 
-          <input
-            type="number"
-            placeholder="Price"
-            className="w-full p-2 bg-gray-800 rounded"
-            value={price}
-            onChange={(e) => setPrice(Number(e.target.value))}
-            required
-          />
+        <textarea
+          name="description"
+          placeholder="Description"
+          value={form.description}
+          onChange={handleChange}
+          className="w-full p-2 text-black rounded"
+        />
 
-          <textarea
-            placeholder="Description"
-            className="w-full p-2 bg-gray-800 rounded"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
+        <input
+          name="price"
+          type="number"
+          placeholder="Price"
+          value={form.price}
+          onChange={handleChange}
+          className="w-full p-2 text-black rounded"
+          required
+        />
 
-          <button
-            type="submit"
-            className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded"
-          >
-            Add Product
-          </button>
-        </form>
-      </div>
-    </AdminGuard>
+        <input
+          name="stock"
+          type="number"
+          placeholder="Stock"
+          value={form.stock}
+          onChange={handleChange}
+          className="w-full p-2 text-black rounded"
+        />
+
+        <input
+          name="category"
+          placeholder="Category ID"
+          value={form.category}
+          onChange={handleChange}
+          className="w-full p-2 text-black rounded"
+          required
+        />
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 p-2 rounded hover:bg-blue-700"
+        >
+          {loading ? "Adding..." : "Add Product"}
+        </button>
+      </form>
+
+      {message && <p className="mt-4">{message}</p>}
+    </div>
   );
 }

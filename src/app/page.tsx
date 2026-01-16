@@ -2,12 +2,13 @@
 
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import type { RootState, AppDispatch } from "@/redux/store";
 import { fetchProducts } from "@/redux/slices/productSlice";
+import type { RootState, AppDispatch } from "@/redux/store";
 import ProductCard from "@/components/ProductCard";
 
 export default function HomePage() {
   const dispatch = useDispatch<AppDispatch>();
+
   const { items, loading, error } = useSelector(
     (state: RootState) => state.products
   );
@@ -17,36 +18,24 @@ export default function HomePage() {
   }, [dispatch]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        Loading products...
-      </div>
-    );
+    return <p className="text-center mt-10">Loading products...</p>;
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen bg-black text-red-500 flex items-center justify-center">
-        {error}
-      </div>
-    );
+    return <p className="text-center mt-10 text-red-500">{error}</p>;
   }
 
   return (
-    <div className="min-h-screen bg-black p-6">
-      <h1 className="text-3xl text-white font-bold mb-6">
+    <div className="p-6">
+      <h1 className="text-3xl font-bold text-white mb-6">
         🛒 DairyKart Products
       </h1>
 
-      {items.length === 0 ? (
-        <p className="text-gray-400">No products found</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {items.map((product) => (
-            <ProductCard key={product._id} product={product} />
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        {items.map((product) => (
+          <ProductCard key={product._id} product={product} />
+        ))}
+      </div>
     </div>
   );
 }

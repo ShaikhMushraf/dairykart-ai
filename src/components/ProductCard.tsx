@@ -9,8 +9,24 @@ interface Props {
   product: Product;
 }
 
+/**
+ * Product Card
+ * Converts Product → CartItem before dispatch
+ */
 export default function ProductCard({ product }: Props) {
   const dispatch = useDispatch<AppDispatch>();
+
+  const handleAddToCart = () => {
+    dispatch(
+      addToCart({
+        _id: product._id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        quantity: 1, // 🔥 REQUIRED
+      })
+    );
+  };
 
   return (
     <div className="bg-gray-900 text-white rounded-lg p-4 shadow hover:shadow-lg transition">
@@ -20,7 +36,7 @@ export default function ProductCard({ product }: Props) {
         className="h-40 w-full object-cover rounded mb-3"
       />
 
-      <h2 className="font-semibold text-lg">{product.name}</h2>
+      <h2 className="text-lg font-semibold">{product.name}</h2>
 
       {product.category && (
         <p className="text-sm text-gray-400">
@@ -33,8 +49,8 @@ export default function ProductCard({ product }: Props) {
       </p>
 
       <button
-        onClick={() => dispatch(addToCart(product))}
-        className="mt-3 w-full bg-blue-600 hover:bg-blue-700 py-2 rounded"
+        onClick={handleAddToCart}
+        className="mt-4 w-full bg-blue-600 hover:bg-blue-700 py-2 rounded"
       >
         Add to Cart
       </button>
