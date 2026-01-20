@@ -1,62 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-
-interface OrderItem {
-  productId: string;
-  name: string;
-  price: number;
-  quantity: number;
-}
-
-interface Order {
-  _id: string;
-  items: OrderItem[];
-  totalAmount: number;
-  address: string;
-  status: string;
-  createdAt: string;
-}
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState, AppDispatch } from "@/redux/store";
+import { fetchUserOrders } from "@/redux/slices/orderSlice";
 
 export default function OrdersPage() {
-  const router = useRouter();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { orders, loading, error } = useSelector(
+    (state: RootState) => state.orders
+  );
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const res = await fetch("/api/orders", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-
-        if (res.status === 401) {
-          router.push("/login");
-          return;
-        }
-
-        const data = await res.json();
-        setOrders(data);
-      } catch {
-        alert("Failed to load orders");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOrders();
-  }, [router]);
+    dispatch(fetchUserOrders());
+  }, [dispatch]);
 
   if (loading) {
-    return <p className="text-white text-center mt-10">Loading orders...</p>;
+    return <p className="text-center text-white mt-10">Loading orders...</p>;
+  }
+
+  if (error) {
+    return <p className="text-center text-red-500">{error}</p>;
   }
 
   if (orders.length === 0) {
     return (
-      <p className="text-white text-center mt-10">
+      <p className="text-center text-white mt-10">
         No orders found 📦
       </p>
     );
@@ -66,31 +36,31 @@ export default function OrdersPage() {
     <div className="p-6 text-white max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">My Orders</h1>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {orders.map((order) => (
           <div
             key={order._id}
             className="bg-gray-900 p-4 rounded"
           >
-            <div className="flex justify-between mb-2">
-              <span className="text-gray-400 text-sm">
-                {new Date(order.createdAt).toLocaleString()}
-              </span>
-              <span className="text-green-400 font-semibold">
-                {order.status.toUpperCase()}
-              </span>
-            </div>
+            <p className="text-sm text-gray-400">
+              Order ID: {order._id}
+            </p>
 
-            {order.items.map((item, idx) => (
-              <p key={idx} className="text-sm">
-                {item.name} × {item.quantity} — ₹
-                {item.price * item.quantity}
-              </p>
-            ))}
-
-            <p className="mt-2 font-bold">
+            <p className="font-semibold">
               Total: ₹{order.totalAmount}
             </p>
+
+            <p className="text-green-400">
+              Status: {order.status}
+            </p>
+
+            <ul className="mt-2 text-sm text-gray-300">
+              {order.items.map((item, index) => (
+                <li key={index}>
+                  {item.name} × {item.quantity}
+                </li>
+              ))}
+            </ul>
           </div>
         ))}
       </div>

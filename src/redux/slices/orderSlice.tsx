@@ -1,39 +1,56 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import apiFetch from "@/services/api";
 import type { Order } from "@/types/order";
 
 /**
- * Orders state
+ * Redux order state
  */
 interface OrderState {
   orders: Order[];
   loading: boolean;
+  error: string | null;
 }
 
 const initialState: OrderState = {
   orders: [],
   loading: false,
+  error: null,
 };
+
+/**
+ * Fetch orders for logged-in user
+ */
+export const fetchUserOrders = createAsyncThunk<
+  Order[],                 // ✅ return type
+  void,                    // ✅ argument type
+  { rejectValue: string }
+>("orders/fetchUser", async (_, { rejectWithValue }) => {
+  try {
+    const res = await apiFetch("/api/orders");
+    return res as Order[];
+  } catch {
+    return rejectWithValue("Failed to fetch orders");
+  }
+});
 
 const orderSlice = createSlice({
   name: "orders",
   initialState,
-  reducers: {
-    /**
-     * Save order locally after checkout
-     * (Later this will call backend API)
-     */
-    placeOrder(state, action: PayloadAction<Order>) {
-      state.orders.push(action.payload);
-    },
-
-    /**
-     * Clear orders (optional / admin use)
-     */
-    clearOrders(state) {
-      state.orders = [];
-    },
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchUserOrders.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchUserOrders.fulfilled, (state, action) => {
+        state.loading = false;
+        state.orders = action.payload;
+      })
+      .addCase(fetchUserOrders.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Error";
+      });
   },
 });
 
-export const { placeOrder, clearOrders } = orderSlice.actions;
 export default orderSlice.reducer;

@@ -1,18 +1,20 @@
-export async function apiRequest<T>(
+export default async function apiFetch(
   url: string,
   options?: RequestInit
-): Promise<T> {
+) {
+  const token = localStorage.getItem("token");
+
   const res = await fetch(url, {
+    ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(options?.headers || {}),
+      Authorization: token ? `Bearer ${token}` : "",
+      ...options?.headers,
     },
-    ...options,
   });
 
   if (!res.ok) {
-    const message = await res.text();
-    throw new Error(message || "API request failed");
+    throw new Error("API error");
   }
 
   return res.json();

@@ -1,12 +1,14 @@
 "use client";
 
-import { useDispatch } from "react-redux";
-import { closeLoginModal } from "@/redux/slices/uiSlice";
-import { loginSuccess } from "@/redux/slices/authSlice";
 import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "@/redux/slices/authSlice";
+import { useRouter } from "next/navigation";
 
-export default function LoginModal() {
+export default function AdminLoginPage() {
   const dispatch = useDispatch();
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -24,6 +26,11 @@ export default function LoginModal() {
       return;
     }
 
+    if (data.user.role !== "admin") {
+      alert("Admin access only");
+      return;
+    }
+
     localStorage.setItem("token", data.token);
 
     dispatch(
@@ -33,21 +40,13 @@ export default function LoginModal() {
       })
     );
 
-    dispatch(closeLoginModal());
+    router.push("/admin/dashboard");
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-      <div className="bg-gray-900 text-white p-6 rounded w-96">
-        <h2 className="text-xl font-bold mb-4">Login Required</h2>
-        <p className="text-sm text-gray-400 mb-3">
-  Already have an account? Login below
-</p>
-
-<p className="text-xs text-blue-400 cursor-pointer mt-2">
-  Forgot password?
-</p>
-
+    <div className="min-h-screen flex items-center justify-center bg-black text-white">
+      <div className="bg-gray-900 p-6 rounded w-96">
+        <h1 className="text-2xl font-bold mb-4">Admin Login</h1>
 
         <input
           className="w-full p-2 mb-3 bg-gray-800 rounded"

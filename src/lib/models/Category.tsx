@@ -1,22 +1,19 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
-const CategorySchema = new mongoose.Schema(
+/**
+ * Category Schema
+ * Used to group products
+ */
+const CategorySchema = new Schema(
   {
     name: {
       type: String,
       required: true,
       unique: true,
-      trim: true,
-    },
-
-    description: {
-      type: String,
     },
   },
   { timestamps: true }
 );
 
-const Category =
-  mongoose.models.Category || mongoose.model("Category", CategorySchema);
-
-export default Category;
+export default mongoose.models.Category ||
+  mongoose.model("Category", CategorySchema);

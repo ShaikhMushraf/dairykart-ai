@@ -1,6 +1,5 @@
-"use client"; // Required because we use hooks & Redux
+"use client";
 
-import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "@/redux/store";
 import {
@@ -10,35 +9,32 @@ import {
   clearCart,
 } from "@/redux/slices/cartSlice";
 import { openLoginModal } from "@/redux/slices/uiSlice";
+import { useRouter } from "next/navigation";
 
-/**
- * Cart Page
- * - Guest users can reach page
- * - If not authenticated → login modal opens
- */
 export default function CartPage() {
-  // ✅ SINGLE dispatch (fixed)
   const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
 
-  // ✅ Cart state
   const { items, totalAmount } = useSelector(
     (state: RootState) => state.cart
   );
 
-  // ✅ Auth state
   const { isAuthenticated } = useSelector(
     (state: RootState) => state.auth
   );
 
   /**
-   * 🔐 Soft auth guard
-   * Opens login modal instead of redirect
+   * Checkout handler
+   * 🔐 Login enforced ONLY here
    */
-  useEffect(() => {
+  const handleCheckout = () => {
     if (!isAuthenticated) {
-      dispatch(openLoginModal()); // ✅ ADDED
+      dispatch(openLoginModal());
+      return;
     }
-  }, [isAuthenticated, dispatch]);
+
+    router.push("/checkout");
+  };
 
   /**
    * Empty cart UI
@@ -59,7 +55,6 @@ export default function CartPage() {
         Your Cart
       </h1>
 
-      {/* Cart items */}
       <div className="space-y-4">
         {items.map((item) => (
           <div
@@ -72,7 +67,6 @@ export default function CartPage() {
                 ₹{item.price}
               </p>
 
-              {/* Quantity controls */}
               <div className="flex items-center mt-2 gap-2">
                 <button
                   onClick={() =>
@@ -96,7 +90,6 @@ export default function CartPage() {
               </div>
             </div>
 
-            {/* Remove item */}
             <button
               onClick={() =>
                 dispatch(removeFromCart(item._id))
@@ -109,7 +102,6 @@ export default function CartPage() {
         ))}
       </div>
 
-      {/* Cart summary */}
       <div className="mt-8 border-t border-gray-700 pt-4">
         <h2 className="text-xl font-bold">
           Total: ₹{totalAmount}
@@ -123,7 +115,10 @@ export default function CartPage() {
             Clear Cart
           </button>
 
-          <button className="bg-green-600 px-4 py-2 rounded">
+          <button
+            onClick={handleCheckout}
+            className="bg-green-600 px-4 py-2 rounded"
+          >
             Proceed to Checkout
           </button>
         </div>

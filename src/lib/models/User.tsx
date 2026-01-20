@@ -5,27 +5,27 @@ const UserSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      trim: true,
     },
+
     email: {
       type: String,
       required: true,
       unique: true,
-      lowercase: true,
     },
+
     password: {
       type: String,
       required: true,
-      minlength: 6,
     },
+
     role: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "seller", "admin"],
       default: "user",
     },
   },
   { timestamps: true }
 );
 
-// Prevent model overwrite in dev (Next.js hot reload)
-export default mongoose.models.User || mongoose.model("User", UserSchema);
+export default mongoose.models.User ||
+  mongoose.model("User", UserSchema);

@@ -1,9 +1,9 @@
 "use client";
 
 import { useSelector } from "react-redux";
+import type { RootState } from "@/redux/store";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import type { RootState } from "@/redux/store";
 
 export default function AdminGuard({
   children,
@@ -11,16 +11,19 @@ export default function AdminGuard({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-
   const { user, isAuthenticated } = useSelector(
     (state: RootState) => state.auth
   );
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== "admin") {
-      router.push("/login");
+      router.replace("/admin/login");
     }
   }, [isAuthenticated, user, router]);
+
+  if (!isAuthenticated || user?.role !== "admin") {
+    return null;
+  }
 
   return <>{children}</>;
 }

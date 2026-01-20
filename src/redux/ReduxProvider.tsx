@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * ReduxProvider
+ * --------------
+ * Wraps the application with Redux store
+ * Required for useDispatch & useSelector to work
+ */
+
 import { Provider } from "react-redux";
 import { store } from "./store";
 
@@ -10,6 +17,8 @@ export default function ReduxProvider({
 }) {
   return <Provider store={store}>{children}</Provider>;
 }
+
+
 
 /**
  * ReduxProvider

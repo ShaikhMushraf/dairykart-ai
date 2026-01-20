@@ -1,7 +1,19 @@
-import mongoose from "mongoose";
-import "./Category"; // 👈 ADD THIS LINE
+import mongoose, { Schema, Document } from "mongoose";
 
-const ProductSchema = new mongoose.Schema(
+/**
+ * Product document interface (TypeScript safety)
+ */
+export interface IProduct extends Document {
+  name: string;
+  price: number;
+  image: string;
+  stock: number;
+  category: mongoose.Types.ObjectId;
+  sellerId: mongoose.Types.ObjectId;
+  isActive: boolean;
+}
+
+const ProductSchema = new Schema<IProduct>(
   {
     name: {
       type: String,
@@ -9,27 +21,33 @@ const ProductSchema = new mongoose.Schema(
       trim: true,
     },
 
-    description: {
-      type: String,
-    },
-
     price: {
       type: Number,
       required: true,
     },
 
-    stock: {
-      type: Number,
-      default: 0,
-    },
-
     image: {
       type: String,
+      required: true,
     },
 
+    stock: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    // 🔗 Reference to Category collection
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
+      required: true,
+    },
+
+    // 🔗 Reference to Seller collection
+    sellerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Seller",
       required: true,
     },
 
@@ -41,8 +59,5 @@ const ProductSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ⭐ VERY IMPORTANT: assign model to variable first
-const Product =
-  mongoose.models.Product || mongoose.model("Product", ProductSchema);
-
-export default Product;
+export default mongoose.models.Product ||
+  mongoose.model<IProduct>("Product", ProductSchema);

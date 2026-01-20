@@ -3,13 +3,15 @@ import cartReducer from "./slices/cartSlice";
 import authReducer from "./slices/authSlice";
 import productReducer from "./slices/productSlice";
 import uiReducer from "./slices/uiSlice";
+import orderReducer from "./slices/orderSlice";
 
 export const store = configureStore({
   reducer: {
     cart: cartReducer,
     auth: authReducer,
     products: productReducer,
-    ui: uiReducer, // ✅ added
+    ui: uiReducer,
+    orders: orderReducer,
   },
 });
 

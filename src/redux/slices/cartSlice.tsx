@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-
 /**
  * CartItem
  * Product + quantity
@@ -11,7 +10,6 @@ export interface CartItem {
   image?: string;
   quantity: number;
 }
-
 /**
  * Cart State
  */
@@ -19,7 +17,6 @@ interface CartState {
   items: CartItem[];
   totalAmount: number;
 }
-
 /**
  * Initial State
  */
@@ -27,7 +24,6 @@ const initialState: CartState = {
   items: [],
   totalAmount: 0,
 };
-
 /**
  * Cart Slice
  */
@@ -35,58 +31,48 @@ const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    addToCart: (state, action: PayloadAction<CartItem>) => {
-      const existingItem = state.items.find(
+    addToCart(state, action: PayloadAction<Omit<CartItem, "quantity">>) {
+      const existing = state.items.find(
         (item) => item._id === action.payload._id
       );
 
-      if (existingItem) {
-        existingItem.quantity += 1;
+      if (existing) {
+        existing.quantity += 1;
       } else {
-        state.items.push(action.payload);
+        state.items.push({
+          ...action.payload,
+          quantity: 1,
+        });
       }
 
-      state.totalAmount = state.items.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0
-      );
+      state.totalAmount += action.payload.price;
     },
 
-    removeFromCart: (state, action: PayloadAction<string>) => {
-      state.items = state.items.filter(
-        (item) => item._id !== action.payload
-      );
-
-      state.totalAmount = state.items.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0
-      );
-    },
-
-    increaseQty: (state, action: PayloadAction<string>) => {
+    increaseQty(state, action: PayloadAction<string>) {
       const item = state.items.find((i) => i._id === action.payload);
-      if (item) item.quantity += 1;
-
-      state.totalAmount = state.items.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0
-      );
+      if (item) {
+        item.quantity += 1;
+        state.totalAmount += item.price;
+      }
     },
 
-    decreaseQty: (state, action: PayloadAction<string>) => {
+    decreaseQty(state, action: PayloadAction<string>) {
       const item = state.items.find((i) => i._id === action.payload);
-
       if (item && item.quantity > 1) {
         item.quantity -= 1;
+        state.totalAmount -= item.price;
       }
-
-      state.totalAmount = state.items.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0
-      );
     },
 
-    clearCart: (state) => {
+    removeFromCart(state, action: PayloadAction<string>) {
+      const item = state.items.find((i) => i._id === action.payload);
+      if (!item) return;
+
+      state.totalAmount -= item.price * item.quantity;
+      state.items = state.items.filter((i) => i._id !== action.payload);
+    },
+
+    clearCart(state) {
       state.items = [];
       state.totalAmount = 0;
     },
@@ -95,9 +81,9 @@ const cartSlice = createSlice({
 
 export const {
   addToCart,
-  removeFromCart,
   increaseQty,
   decreaseQty,
+  removeFromCart,
   clearCart,
 } = cartSlice.actions;
 

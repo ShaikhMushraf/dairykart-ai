@@ -1,7 +1,11 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { apiRequest } from "@/services/api";
-import type { Product } from "@/types/product";
+import apiRequest from "@/services/api";
+import type { Product, CreateProductPayload } from "@/types/product";
 
+
+/**
+ * Product slice state
+ */
 export interface ProductState {
   items: Product[];
   loading: boolean;
@@ -15,44 +19,55 @@ const initialState: ProductState = {
 };
 
 /**
- * FETCH PRODUCTS
+ * FETCH PRODUCTS (PUBLIC)
  */
-export const fetchProducts = createAsyncThunk(
-  "products/fetch",
-  async () => {
-    const res = await apiRequest<{
-      products: Product[];
-    }>("/api/products");
-
-    return res.products;
+export const fetchProducts = createAsyncThunk<
+  Product[],
+  void,
+  { rejectValue: string }
+>("products/fetch", async (_, { rejectWithValue }) => {
+  try {
+    const res = await apiRequest("/api/products");
+    return res.products as Product[];
+  } catch {
+    return rejectWithValue("Failed to fetch products");
   }
-);
+});
 
 /**
  * ADD PRODUCT (ADMIN)
  */
-export const addProduct = createAsyncThunk(
-  "products/add",
-  async (data: Partial<Product>) => {
-    return apiRequest<Product>("/api/admin/products", {
+export const addProduct = createAsyncThunk<
+  Product,
+  CreateProductPayload,
+  { rejectValue: string }
+>("products/add", async (data, { rejectWithValue }) => {
+  try {
+    return await apiRequest("/api/admin/products", {
       method: "POST",
       body: JSON.stringify(data),
     });
+  } catch {
+    return rejectWithValue("Failed to add product");
   }
-);
-
+});
 /**
  * DELETE PRODUCT (ADMIN)
  */
-export const deleteProduct = createAsyncThunk(
-  "products/delete",
-  async (id: string) => {
+export const deleteProduct = createAsyncThunk<
+  string,
+  string,
+  { rejectValue: string }
+>("products/delete", async (id, { rejectWithValue }) => {
+  try {
     await apiRequest(`/api/admin/products/${id}`, {
       method: "DELETE",
     });
     return id;
+  } catch {
+    return rejectWithValue("Failed to delete product");
   }
-);
+});
 
 const productSlice = createSlice({
   name: "products",
@@ -66,6 +81,10 @@ const productSlice = createSlice({
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
         state.items = action.payload;
+      })
+      .addCase(fetchProducts.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Error";
       })
       .addCase(addProduct.fulfilled, (state, action) => {
         state.items.push(action.payload);

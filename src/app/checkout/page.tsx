@@ -1,27 +1,37 @@
 "use client";
 
-import { useSelector, useDispatch } from "react-redux";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "@/redux/store";
 import { clearCart } from "@/redux/slices/cartSlice";
+import { openLoginModal } from "@/redux/slices/uiSlice";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 export default function CheckoutPage() {
-  const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
 
-  // ✅ Only select what is actually used
   const { items, totalAmount } = useSelector(
     (state: RootState) => state.cart
+  );
+
+  const { isAuthenticated } = useSelector(
+    (state: RootState) => state.auth
   );
 
   const [address, setAddress] = useState("");
 
   /**
-   * Place order handler
-   * - Calls backend Orders API
-   * - Clears cart on success
-   * - Redirects user
+   * 🔐 Soft auth guard
+   */
+  useEffect(() => {
+    if (!isAuthenticated) {
+      dispatch(openLoginModal());
+    }
+  }, [isAuthenticated, dispatch]);
+
+  /**
+   * Place Order
    */
   const handlePlaceOrder = async () => {
     if (!address) {
@@ -29,41 +39,46 @@ export default function CheckoutPage() {
       return;
     }
 
-    try {
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({
-          items: items.map((item) => ({
-            productId: item._id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-          })),
-          totalAmount,
-          address,
-        }),
-      });
+    const res = await fetch("/api/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({
+        items: items.map((item) => ({
+          productId: item._id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+        totalAmount,
+        address,
+      }),
+    });
 
-      if (!res.ok) {
-        throw new Error("Order failed");
-      }
+    if (!res.ok) {
+      alert("Order failed");
+      return;
+    }
 
-      dispatch(clearCart());
-      alert("Order placed successfully 🎉");
-      router.push("/orders");
-    } catch {
-  alert("Something went wrong");
-}
-
+    dispatch(clearCart());
+    router.push("/orders");
   };
+
+  if (items.length === 0) {
+    return (
+      <p className="text-center text-white mt-10">
+        Cart is empty
+      </p>
+    );
+  }
 
   return (
     <div className="p-6 text-white max-w-xl mx-auto">
-      <h1 className="text-3xl font-bold mb-4">Checkout</h1>
+      <h1 className="text-3xl font-bold mb-4">
+        Checkout
+      </h1>
 
       <textarea
         placeholder="Delivery Address"

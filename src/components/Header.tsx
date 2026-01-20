@@ -6,36 +6,55 @@ import type { RootState } from "@/redux/store";
 
 /**
  * Header Component
- * - Shows app title
- * - Shows cart icon with item count
- * - Uses Redux global state
+ * - Public users: Cart + Become Seller
+ * - Seller users: Cart + Seller Dashboard
+ * - Shows cart item count (UX feedback)
  */
 export default function Header() {
-  const totalItems = useSelector(
-    (state: RootState) =>
-      state.cart.items.reduce(
-        (sum, item) => sum + item.quantity,
-        0
-      )
+  const { user } = useSelector((state: RootState) => state.auth);
+
+  // ✅ NEW: Cart count from Redux
+  const cartCount = useSelector(
+    (state: RootState) => state.cart.items.length
   );
 
   return (
-    <header className="flex justify-between items-center px-6 py-4 bg-gray-900 text-white">
-      <Link href="/">
-        <h1 className="text-xl font-bold">
-          DairyKart 🥛
-        </h1>
+    <header className="flex justify-between items-center px-6 py-4 bg-black text-white">
+      {/* Logo */}
+      <Link href="/" className="text-xl font-bold">
+        🧺 DairyKart
       </Link>
 
-      <Link href="/cart" className="relative">
-        <span className="text-2xl">🛒</span>
+      {/* Right Actions */}
+      <div className="flex gap-4 items-center">
+        {/* Cart always visible */}
+        <Link
+          href="/cart"
+          className="px-3 py-1 bg-gray-800 rounded"
+        >
+          🛒 Cart ({cartCount})
+        </Link>
 
-        {totalItems > 0 && (
-          <span className="absolute -top-2 -right-2 bg-red-600 text-xs px-2 py-1 rounded-full">
-            {totalItems}
-          </span>
+        {/* Become Seller (only when NOT logged in) */}
+        {!user && (
+          <Link
+            href="/seller/register"
+            className="px-3 py-1 bg-green-600 rounded"
+          >
+            🏪 Become a Seller
+          </Link>
         )}
-      </Link>
+
+        {/* Seller Dashboard */}
+        {user?.role === "seller" && (
+          <Link
+            href="/seller/dashboard"
+            className="px-3 py-1 bg-blue-600 rounded"
+          >
+            Seller Dashboard
+          </Link>
+        )}
+      </div>
     </header>
   );
 }
