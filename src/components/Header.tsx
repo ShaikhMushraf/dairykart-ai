@@ -1,58 +1,70 @@
 "use client";
 
 import Link from "next/link";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
+import { openSellerModal, openLoginModal } from "@/redux/slices/uiSlice";
+import UserMenu from "@/components/UserMenu";
 
-/**
- * Header Component
- * - Public users: Cart + Become Seller
- * - Seller users: Cart + Seller Dashboard
- * - Shows cart item count (UX feedback)
- */
 export default function Header() {
+  const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
-
-  // ✅ NEW: Cart count from Redux
   const cartCount = useSelector(
     (state: RootState) => state.cart.items.length
   );
 
   return (
-    <header className="flex justify-between items-center px-6 py-4 bg-black text-white">
-      {/* Logo */}
+    <header className="flex justify-between items-center px-6 py-4 bg-black text-white border-b border-gray-800">
       <Link href="/" className="text-xl font-bold">
         🧺 DairyKart
       </Link>
 
-      {/* Right Actions */}
-      <div className="flex gap-4 items-center">
-        {/* Cart always visible */}
-        <Link
-          href="/cart"
-          className="px-3 py-1 bg-gray-800 rounded"
-        >
-          🛒 Cart ({cartCount})
-        </Link>
-
-        {/* Become Seller (only when NOT logged in) */}
-        {!user && (
-          <Link
-            href="/seller/register"
-            className="px-3 py-1 bg-green-600 rounded"
-          >
-            🏪 Become a Seller
+      <div className="flex items-center gap-4">
+        {/* Cart (Public + User only) */}
+        {(!user || user.role === "user") && (
+          <Link href="/cart" className="bg-gray-800 px-3 py-1 rounded">
+            🛒 Cart ({cartCount})
           </Link>
         )}
 
-        {/* Seller Dashboard */}
+        {/* Switch to Seller (Public + User) */}
+        {(!user || user.role === "user") && (
+          <button
+            onClick={() => dispatch(openSellerModal())}
+            className="bg-green-600 px-3 py-1 rounded"
+          >
+            🏪 Switch to Seller
+          </button>
+        )}
+
+        {/* Login (Public only) */}
+        {!user && (
+          <button
+            onClick={() => dispatch(openLoginModal())}
+            className="bg-blue-600 px-3 py-1 rounded"
+          >
+            🔐 Login
+          </button>
+        )}
+
+        {/* Seller shortcut */}
         {user?.role === "seller" && (
           <Link
             href="/seller/dashboard"
-            className="px-3 py-1 bg-blue-600 rounded"
+            className="bg-blue-600 px-3 py-1 rounded"
           >
             Seller Dashboard
           </Link>
+        )}
+
+        {/* User Menu (User + Seller) */}
+        {user && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-300">
+              Hi, {user.firstName}
+            </span>
+            <UserMenu />
+          </div>
         )}
       </div>
     </header>

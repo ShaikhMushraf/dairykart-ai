@@ -1,6 +1,13 @@
 export interface User {
-  _id: string;
-  name: string;
+  id: string;
+
+  // User fields
+  firstName?: string;
+  lastName?: string;
+
+  // Seller field
+  name?: string;
+
   email: string;
-  role: "user" | "seller" |"admin";
+  role: "user" | "seller" | "admin";
 }

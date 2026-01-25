@@ -8,11 +8,18 @@ export async function POST(req) {
   try {
     await dbConnect();
 
-    const { name, email, password } = await req.json();
+    const { firstName, lastName, email, password } = await req.json();
 
-    if (!name || !email || !password) {
+    if (!firstName || !lastName || !email || !password) {
       return NextResponse.json(
         { message: "All fields are required" },
+        { status: 400 }
+      );
+    }
+
+    if (password.length < 6) {
+      return NextResponse.json(
+        { message: "Password must be at least 6 characters" },
         { status: 400 }
       );
     }
@@ -28,7 +35,8 @@ export async function POST(req) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      name,
+      firstName,
+      lastName,
       email,
       password: hashedPassword,
     });
@@ -40,18 +48,18 @@ export async function POST(req) {
     );
 
     return NextResponse.json({
-      message: "User registered successfully",
       token,
       user: {
         id: user._id,
-        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
         role: user.role,
       },
     });
   } catch (error) {
     return NextResponse.json(
-      { error: error.message },
+      { message: error.message },
       { status: 500 }
     );
   }

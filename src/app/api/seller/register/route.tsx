@@ -3,17 +3,15 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dbConnect from "@/lib/mongodb";
 import User from "@/lib/models/User";
+import Seller from "@/lib/models/Seller";
 
-/**
- * SELLER REGISTRATION API
- * POST /api/seller/register
- */
 export async function POST(req: Request) {
   try {
     await dbConnect();
 
     const {
-      name,
+      firstName,
+      lastName,
       email,
       password,
       storeName,
@@ -21,58 +19,73 @@ export async function POST(req: Request) {
       address,
     } = await req.json();
 
-    // ✅ basic validation
-    if (!name || !email || !password || !storeName) {
+    if (
+      !firstName ||
+      !lastName ||
+      !email ||
+      !password ||
+      !storeName ||
+      !phone ||
+      !address
+    ) {
       return NextResponse.json(
         { message: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    // ❌ duplicate seller check
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    // 1️⃣ Find or create USER (role ALWAYS user)
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      user = await User.create({
+        firstName,
+        lastName,
+        email,
+        password: hashedPassword,
+        role: "user", // 🔒 NEVER seller
+      });
+    }
+
+    // 2️⃣ Check if seller already exists
+    const existingSeller = await Seller.findOne({ userId: user._id });
+    if (existingSeller) {
       return NextResponse.json(
-        { message: "Seller already exists" },
+        { message: "Seller already exists for this account" },
         { status: 409 }
       );
     }
 
-    // 🔐 hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // ✅ create seller
-    const seller = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role: "seller",
+    // 3️⃣ Create seller record
+    await Seller.create({
+      userId: user._id,
       storeName,
       phone,
       address,
     });
 
-    // 🔑 generate JWT
+    // 4️⃣ Seller JWT (role only for token)
     const token = jwt.sign(
-      { id: seller._id, role: seller.role },
+      { id: user._id, role: "seller" },
       process.env.JWT_SECRET!,
       { expiresIn: "7d" }
     );
 
     return NextResponse.json({
       message: "Seller registered successfully",
-      user: {
-        id: seller._id,
-        name: seller.name,
-        email: seller.email,
-        role: seller.role,
-        storeName: seller.storeName,
-      },
       token,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: "seller",
+      },
     });
   } catch (error) {
     console.error("SELLER REGISTER ERROR:", error);
-
     return NextResponse.json(
       { message: "Seller registration failed" },
       { status: 500 }

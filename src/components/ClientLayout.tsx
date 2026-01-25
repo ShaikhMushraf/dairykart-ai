@@ -4,11 +4,13 @@ import { useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import Header from "@/components/Header";
 import LoginModal from "@/components/LoginModal";
+import SellerModalWrapper from "@/components/SellerModalWrapper";
 
 /**
  * ClientLayout
- * - Runs on client
- * - Can safely use Redux hooks
+ * ------------
+ * - Central place for ALL modals
+ * - Nothing opens unless Redux explicitly allows it
  */
 export default function ClientLayout({
   children,
@@ -22,7 +24,13 @@ export default function ClientLayout({
   return (
     <>
       <Header />
+
+      {/* User login modal (checkout flow) */}
       {showLoginModal && <LoginModal />}
+
+      {/* Seller login/register modal (Become Seller flow) */}
+      <SellerModalWrapper />
+
       {children}
     </>
   );

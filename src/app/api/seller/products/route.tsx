@@ -77,3 +77,35 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export async function GET(req: Request) {
+  try {
+    await dbConnect();
+
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) {
+      return NextResponse.json([], { status: 200 }); // ✅ ALWAYS JSON
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET!
+    ) as { id: string; role: string };
+
+    if (decoded.role !== "seller") {
+      return NextResponse.json([], { status: 200 });
+    }
+
+    const products = await Product.find({
+      sellerId: decoded.id,
+      isActive: true,
+    }).populate("category");
+
+    return NextResponse.json(products); // ✅ SAFE
+  } catch (error) {
+    console.error("SELLER PRODUCTS ERROR:", error);
+    return NextResponse.json([], { status: 200 }); // ✅ NEVER BREAK JSON
+  }
+}

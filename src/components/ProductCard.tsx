@@ -7,24 +7,19 @@ import type { Product } from "@/types/product";
 import type { AppDispatch } from "@/redux/store";
 
 /**
- * ProductCard Component
- * ---------------------
- * - Used on Home page
- * - Used on Seller dashboard
- * - Adds product to cart
+ * ProductCard
+ * -----------
+ * - User-facing card
+ * - Add product to cart
+ * - NO seller logic here
  */
 interface Props {
   product: Product;
-  refresh?: () => void; // Optional (seller dashboard only)
 }
 
-export default function ProductCard({ product, refresh }: Props) {
+export default function ProductCard({ product }: Props) {
   const dispatch = useDispatch<AppDispatch>();
 
-  /**
-   * Add product to cart
-   * - Quantity is handled inside cartSlice
-   */
   const handleAddToCart = () => {
     dispatch(
       addToCart({
@@ -39,7 +34,7 @@ export default function ProductCard({ product, refresh }: Props) {
   return (
     <div className="bg-gray-900 p-4 rounded shadow text-white">
       <Image
-        src={product.image}
+        src={product.image || "/products/Cream Milk.jpeg"}
         alt={product.name}
         width={400}
         height={250}
@@ -55,16 +50,6 @@ export default function ProductCard({ product, refresh }: Props) {
       >
         Add to Cart
       </button>
-
-      {/* Seller-only action */}
-      {refresh && (
-        <button
-          onClick={refresh}
-          className="mt-2 w-full bg-gray-700 py-1 rounded text-sm"
-        >
-          🔄 Refresh
-        </button>
-      )}
     </div>
   );
 }

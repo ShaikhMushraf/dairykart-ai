@@ -2,15 +2,23 @@ import mongoose from "mongoose";
 
 const UserSchema = new mongoose.Schema(
   {
-    name: {
+    firstName: {
       type: String,
       required: true,
+      trim: true,
+    },
+
+    lastName: {
+      type: String,
+      required: true,
+      trim: true,
     },
 
     email: {
       type: String,
       required: true,
-      unique: true,
+      unique: true, // 🔒 GLOBAL EMAIL LOCK
+      lowercase: true,
     },
 
     password: {
@@ -23,6 +31,10 @@ const UserSchema = new mongoose.Schema(
       enum: ["user", "seller", "admin"],
       default: "user",
     },
+
+    /* Forgot password (future-ready) */
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
   },
   { timestamps: true }
 );

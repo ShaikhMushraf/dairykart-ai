@@ -2,11 +2,6 @@
 
 import { useState } from "react";
 
-/**
- * Add Product Modal
- * - Clean popup UI
- * - Saves product via API
- */
 export default function AddProductModal({
   onClose,
   onSuccess,
@@ -15,14 +10,34 @@ export default function AddProductModal({
   onSuccess: () => void;
 }) {
   const [name, setName] = useState("");
-  const [price, setPrice] = useState<number>(0);
-  const [image, setImage] = useState("");
-  const [stock, setStock] = useState<number>(1);
+  const [price, setPrice] = useState(0);
+  const [stock, setStock] = useState(1);
   const [category, setCategory] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const token = localStorage.getItem("token");
 
+  const uploadImage = async () => {
+    if (!file) return "";
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    return data.url;
+  };
+
   const saveProduct = async () => {
+    setLoading(true);
+
+    const imageUrl = await uploadImage();
+
     await fetch("/api/seller/products", {
       method: "POST",
       headers: {
@@ -32,12 +47,13 @@ export default function AddProductModal({
       body: JSON.stringify({
         name,
         price,
-        image,
+        image: imageUrl,
         stock,
         category,
       }),
     });
 
+    setLoading(false);
     onSuccess();
     onClose();
   };
@@ -45,9 +61,7 @@ export default function AddProductModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
       <div className="bg-white p-6 rounded w-96">
-        <h2 className="text-xl font-bold mb-4">
-          Add New Product
-        </h2>
+        <h2 className="text-xl font-bold mb-4">Add Product</h2>
 
         <input
           className="w-full mb-2 p-2 border"
@@ -57,7 +71,7 @@ export default function AddProductModal({
 
         <input
           className="w-full mb-2 p-2 border"
-          placeholder="Category (Milk, Curd...)"
+          placeholder="Category"
           onChange={(e) => setCategory(e.target.value)}
         />
 
@@ -65,29 +79,31 @@ export default function AddProductModal({
           type="number"
           className="w-full mb-2 p-2 border"
           placeholder="Price"
-          onChange={(e) => setPrice(Number(e.target.value))}
+          onChange={(e) => setPrice(+e.target.value)}
         />
 
         <input
-          className="w-full mb-2 p-2 border"
-          placeholder="Image URL"
-          onChange={(e) => setImage(e.target.value)}
+          type="file"
+          accept="image/*"
+          className="w-full mb-2"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
         />
 
         <input
           type="number"
           className="w-full mb-4 p-2 border"
           placeholder="Stock"
-          onChange={(e) => setStock(Number(e.target.value))}
+          onChange={(e) => setStock(+e.target.value)}
         />
 
         <div className="flex justify-end gap-3">
           <button onClick={onClose}>Cancel</button>
           <button
             onClick={saveProduct}
+            disabled={loading}
             className="bg-green-600 text-white px-4 py-2 rounded"
           >
-            Save
+            {loading ? "Uploading..." : "Save"}
           </button>
         </div>
       </div>

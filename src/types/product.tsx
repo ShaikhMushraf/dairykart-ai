@@ -14,6 +14,8 @@ export interface Product {
   price: number;
   image: string; // ✅ REQUIRED
   stock: number;
+  isActive: boolean;
+  sellerId?: string;
   category?: {
     _id: string;
     name: string;

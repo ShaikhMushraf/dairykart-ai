@@ -1,8 +1,8 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 import type { User } from "@/types/user";
 
 /**
- * Auth State Interface
+ * Auth State
  */
 interface AuthState {
   user: User | null;
@@ -10,22 +10,11 @@ interface AuthState {
   isAuthenticated: boolean;
 }
 
-/**
- * Initial Auth State
- */
 const initialState: AuthState = {
   user: null,
   token: null,
   isAuthenticated: false,
 };
-
-/**
- * Payload type for login success
- */
-interface LoginPayload {
-  user: User;
-  token: string;
-}
 
 /**
  * Auth Slice
@@ -35,25 +24,29 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     /**
-     * Called after successful login / register
+     * Login success
      */
-    loginSuccess(state, action: PayloadAction<LoginPayload>) {
-      state.user = action.payload.user;
-      state.token = action.payload.token;
-      state.isAuthenticated = true;
+    loginSuccess(state, action) {
+  state.user = {
+    ...action.payload.user,
+    firstName:
+      action.payload.user.firstName ||
+      action.payload.user.name || // ✅ seller support
+      "",
+  };
+  state.token = action.payload.token;
+  state.isAuthenticated = true;
 
-      // Persist token (for refresh survival)
-      localStorage.setItem("token", action.payload.token);
-    },
-
+  // persist token
+  localStorage.setItem("token", action.payload.token);
+},
     /**
-     * Logout user
+     * Logout
      */
     logout(state) {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
-
       localStorage.removeItem("token");
     },
   },

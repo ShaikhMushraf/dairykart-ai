@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
-import { closeLoginModal } from "@/redux/slices/uiSlice";
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState } from "@/redux/store";
+import { useState } from "react";
+import { closeSellerModal } from "@/redux/slices/uiSlice";
 import { loginSuccess } from "@/redux/slices/authSlice";
 import { useRouter } from "next/navigation";
 import AuthModalShell from "@/components/AuthModalShell";
 
-export default function LoginModal() {
+export default function SellerAuthModal() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const authUser = useSelector((state: RootState) => state.auth.user);
 
   const [mode, setMode] = useState<"login" | "register" | "forgot" | "sent">(
     "login"
@@ -20,32 +22,36 @@ export default function LoginModal() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [storeName, setStoreName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false); // ✅ NEW
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    window.history.pushState({ modal: true }, "");
-    const handleBack = () => dispatch(closeLoginModal());
-    window.addEventListener("popstate", handleBack);
-    return () => window.removeEventListener("popstate", handleBack);
-  }, [dispatch]);
-
+  /* ---------------- SUBMIT ---------------- */
   const handleSubmit = async () => {
     setError("");
     setLoading(true);
 
-    const isLogin = mode === "login";
-
     try {
       const res = await fetch(
-        isLogin ? "/api/auth/login" : "/api/auth/register",
+        mode === "login" ? "/api/seller/login" : "/api/seller/register",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(
-            isLogin
+            mode === "login"
               ? { email, password }
-              : { firstName, lastName, email, password }
+              : {
+                  firstName,
+                  lastName,
+                  email,
+                  password,
+                  storeName,
+                  phone,
+                  address,
+                }
           ),
         }
       );
@@ -57,21 +63,28 @@ export default function LoginModal() {
         return;
       }
 
-      dispatch(loginSuccess({ user: data.user, token: data.token }));
-      dispatch(closeLoginModal());
-      window.history.back();
+      // ✅ BACKUP USER SESSION BEFORE SWITCHING TO SELLER
+     if (authUser?.role === "user") {
+  localStorage.setItem(
+    "userSessionBackup",
+    JSON.stringify({
+      user: authUser,
+      token: localStorage.getItem("token"),
+      ts: Date.now(), // ✅ timestamp
+    })
+  );
+}
 
-      const redirect = localStorage.getItem("postLoginRedirect");
-      if (redirect) {
-        localStorage.removeItem("postLoginRedirect");
-        router.push(redirect);
-      }
+      dispatch(loginSuccess({ user: data.user, token: data.token }));
+      dispatch(closeSellerModal());
+      router.push("/seller/dashboard");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleForgot = async () => {
+  /* ---------------- FORGOT PASSWORD ---------------- */
+  const handleForgotPassword = async () => {
     setError("");
     setLoading(true);
 
@@ -84,7 +97,7 @@ export default function LoginModal() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.message || "Failed to send reset link");
+        setError(data.message || "Failed to send reset email");
         return;
       }
 
@@ -98,12 +111,12 @@ export default function LoginModal() {
     <AuthModalShell
       title={
         mode === "login"
-          ? "Login"
+          ? "Seller Login"
           : mode === "register"
-          ? "Create Account"
+          ? "Create Seller Account"
           : "Forgot Password"
       }
-      type="user"
+      type="seller"
       onBack={mode !== "login" ? () => setMode("login") : undefined}
     >
       {mode === "register" && (
@@ -120,6 +133,27 @@ export default function LoginModal() {
             placeholder="Last Name"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
+            disabled={loading}
+          />
+          <input
+            className="w-full p-2 mb-3 bg-gray-800 rounded"
+            placeholder="Store Name"
+            value={storeName}
+            onChange={(e) => setStoreName(e.target.value)}
+            disabled={loading}
+          />
+          <input
+            className="w-full p-2 mb-3 bg-gray-800 rounded"
+            placeholder="Phone"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            disabled={loading}
+          />
+          <input
+            className="w-full p-2 mb-3 bg-gray-800 rounded"
+            placeholder="Address"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
             disabled={loading}
           />
         </>
@@ -139,10 +173,11 @@ export default function LoginModal() {
         <input
           type="password"
           className="w-full p-2 mb-3 bg-gray-800 rounded"
-          placeholder="Password"
+          placeholder="Password (min 6 chars)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+          disabled={loading}
         />
       )}
 
@@ -158,13 +193,13 @@ export default function LoginModal() {
             ? "Please wait..."
             : mode === "login"
             ? "Login"
-            : "Create Account"}
+            : "Create Seller Account"}
         </button>
       )}
 
       {mode === "forgot" && (
         <button
-          onClick={handleForgot}
+          onClick={handleForgotPassword}
           disabled={loading}
           className="w-full bg-blue-600 py-2 rounded font-semibold disabled:opacity-60"
         >
@@ -177,9 +212,7 @@ export default function LoginModal() {
           <p className="text-green-400 font-semibold">
             Password reset link sent
           </p>
-          <p className="text-sm text-gray-400">
-            Check your email to reset your password.
-          </p>
+          <p className="text-sm text-gray-400">Please check your email.</p>
           <button
             onClick={() => setMode("login")}
             className="w-full bg-blue-600 py-2 rounded"
@@ -189,14 +222,14 @@ export default function LoginModal() {
         </div>
       )}
 
-      <div className="mt-4 text-sm text-center text-gray-400 space-y-1">
+      <div className="text-sm text-center text-gray-400 mt-4 space-y-1">
         {mode === "login" && (
           <>
             <p
               className="cursor-pointer text-blue-400"
               onClick={() => setMode("register")}
             >
-              New user? Create account
+              New seller? Create account
             </p>
             <p
               className="cursor-pointer text-blue-400"

@@ -3,26 +3,24 @@
 /**
  * ReduxProvider
  * --------------
- * Wraps the application with Redux store
- * Required for useDispatch & useSelector to work
+ * Wraps app with Redux + PersistGate
+ * Ensures state survives page refresh
  */
 
 import { Provider } from "react-redux";
-import { store } from "./store";
+import { PersistGate } from "redux-persist/integration/react";
+import { store, persistor } from "./store";
 
 export default function ReduxProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <Provider store={store}>{children}</Provider>;
+  return (
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        {children}
+      </PersistGate>
+    </Provider>
+  );
 }
-
-
-
-/**
- * ReduxProvider
- * Wraps the application with Redux store
- * Must be client-side in Next.js App Router
- */
-
